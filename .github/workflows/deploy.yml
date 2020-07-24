@@ -1,0 +1,21 @@
+name: Deploy
+on:
+  release:
+    branches: [master]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup SSH private key
+        uses: webfactory/ssh-agent@v0.4.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Sync files
+        run: rsync -avzr --delete --exclude .git/  --exclude .github/ --exclude README.md --exclude index.html.orig -e "ssh -p ${SSH_REMOTE_PORT} -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key" ${GITHUB_WORKSPACE}/ ${SSH_REMOTE_USER}@${SSH_REMOTE_HOST}:${SSH_REMOTE_TARGET}/
+        env:
+          SSH_REMOTE_PORT: ${{ secrets.SSH_REMOTE_PORT }}
+          SSH_REMOTE_USER: ${{ secrets.SSH_REMOTE_USER }}
+          SSH_REMOTE_HOST: ${{ secrets.SSH_REMOTE_HOST }}
+          SSH_REMOTE_TARGET: ${{ secrets.SSH_REMOTE_TARGET }}
